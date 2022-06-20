@@ -1,0 +1,20 @@
+dev: ''
+  # securityGroupIds:
+  #   - ${opt:security_group_id, ''}
+  # subnetIds:
+  #   - ${opt:subnet_id_2, ''}
+  #   - ${opt:subnet_id_3, ''}
+
+stage:
+  securityGroupIds:
+    - ${opt:security_group_id, ''}
+  subnetIds:
+    - ${opt:subnet_id_2, ''}
+    - ${opt:subnet_id_3, ''}
+
+prod:
+  securityGroupIds:
+    - ${opt:security_group_id, ''}
+  subnetIds:
+    - ${opt:subnet_id_2, ''}
+    - ${opt:subnet_id_3, ''}

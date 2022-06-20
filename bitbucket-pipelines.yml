@@ -1,0 +1,38 @@
+image: lambci/lambda:build-nodejs12.x
+pipelines:
+    branches:
+        develop:
+            - step:
+                deployment: test
+                script:
+                    - npm install
+                    - npm install serverless@1.51.0 -g
+                    - serverless config credentials --overwrite --provider aws --key $AWS_ACCESS_KEY_DEV --secret $AWS_SECRET_KEY_DEV
+                    - serverless create_domain -s dev -r ap-southeast-1 --security_group_id $SECURITY_GROUP_ID_DEV --subnet_id_1 $SUBNET_ID_1_DEV --subnet_id_2 $SUBNET_ID_2_DEV --subnet_id_3 $SUBNET_ID_3_DEV
+                    - serverless deploy -s dev -r ap-southeast-1 --security_group_id $SECURITY_GROUP_ID_DEV --subnet_id_1 $SUBNET_ID_1_DEV --subnet_id_2 $SUBNET_ID_2_DEV --subnet_id_3 $SUBNET_ID_3_DEV
+                    #  --security_group_id $SECURITY_GROUP_ID_DEV --subnet_id_1 $SUBNET_ID_1_DEV --subnet_id_2 $SUBNET_ID_2_DEV --subnet_id_3 $SUBNET_ID_3_DEV
+                caches:
+                    - node
+        
+        stage:
+            - step:
+                deployment: staging
+                script:
+                    - npm install
+                    - npm install serverless@1.51.0 -g
+                    - serverless config credentials --overwrite --provider aws --key $AWS_ACCESS_KEY_STAGE --secret $AWS_SECRET_KEY_STAGE
+                    - serverless create_domain -s stage --security_group_id $SECURITY_GROUP_ID_STAGE --subnet_id_1 $SUBNET_ID_1_STAGE --subnet_id_2 $SUBNET_ID_2_STAGE --subnet_id_3 $SUBNET_ID_3_STAGE
+                    - serverless deploy -s stage --security_group_id $SECURITY_GROUP_ID_STAGE --subnet_id_1 $SUBNET_ID_1_STAGE --subnet_id_2 $SUBNET_ID_2_STAGE --subnet_id_3 $SUBNET_ID_3_STAGE
+                caches:
+                    - node
+        master:
+            - step:
+                deployment: production
+                script:
+                    - npm install
+                    - npm install serverless@1.51.0 -g
+                    - serverless config credentials --overwrite --provider aws --key $AWS_ACCESS_KEY_PROD --secret $AWS_SECRET_KEY_PROD
+                    - serverless create_domain -s prod --security_group_id $SECURITY_GROUP_ID --subnet_id_1 $SUBNET_ID_1 --subnet_id_2 $SUBNET_ID_2 --subnet_id_3 $SUBNET_ID_3
+                    - serverless deploy -s prod --security_group_id $SECURITY_GROUP_ID --subnet_id_1 $SUBNET_ID_1 --subnet_id_2 $SUBNET_ID_2 --subnet_id_3 $SUBNET_ID_3
+                caches:
+                    - node

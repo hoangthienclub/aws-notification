@@ -1,0 +1,61 @@
+dev:
+    STAGE: dev
+    USER_POOL_ARN: arn:aws:cognito-idp:ap-southeast-1:1231321321:userpool/ap-southeast-1_HQQtWJslD
+    COGNITO_CLIENT_ID: 6kce0ooohcet1nj7qs0oldtiva
+    USER_POOL_ID: ap-southeast-1_HQQtWJslD
+    IMAGE_BUCKET: notification-images
+    USERDB: notification
+    DBHOST: notification-dev.cqfjrxgkswhg.ap-southeast-1.rds.amazonaws.com
+    DBNAME: notification
+    DBPORT: '5432'
+    APPLY_SCAN_QR_CODE_GEO_BOUND: false
+    BCC_SEND: true
+    BCC_MAIL: 'dev-payment@notification.com'
+    PREFIX_MAIL: '[Dev] '
+    DATABASE: true
+    S3_TEMPORARY_BUCKET: notification-temporary-upload
+    IMAGE_URL: http://images-dev.notification.com
+    SERVICE_CODE: 1
+    ENDPOINT_SOCKET: dev-ws.notification.com/ws
+
+stage:
+    STAGE: ${opt:stage, 'stage'}
+    USER_POOL_ARN: arn:aws:cognito-idp:us-east-1:1232132133:userpool/us-east-1_d1JDYYI6G
+    COGNITO_CLIENT_ID: 7ng54hv8g68pq29k8m6r1u4mec
+    USER_POOL_ID: us-east-1_d1JDYYI6G
+    IMAGE_BUCKET: notification-images-stage
+    USERDB: notification
+    DBHOST: notification-stage-n1.cx96sa76zh8k.us-east-1.rds.amazonaws.com
+    DBNAME: notification
+    DBPORT: '5432'
+    APPLY_SCAN_QR_CODE_GEO_BOUND: true
+    BCC_SEND: true
+    S3_TEMPORARY_BUCKET: notification-temporary-upload-stage
+    IMAGE_URL: http://images-stage.notification.com
+    BCC_MAIL: 'stage-payment@notification'
+    PREFIX_MAIL: '[Stage] '
+    SERVICE_CODE: 1
+    DATABASE: true
+    ALERT_EMAIL: binh@saigonvalley.com
+    ENDPOINT_SOCKET: stage-ws.notification.com/ws
+
+prod:
+    STAGE: ${opt:stage, 'production'}
+    USER_POOL_ARN: arn:aws:cognito-idp:us-east-1:12312312:userpool/us-east-1_q5lqgOlwc
+    COGNITO_CLIENT_ID: 1pj5lttfi10dm19060bp75g027
+    USER_POOL_ID: us-east-1_q5lqgOlwc
+    IMAGE_BUCKET: notification-images-prod
+    USERDB: notification
+    DBHOST: notification-prod-v1.cbe8l6hafgqs.us-east-1.rds.amazonaws.com
+    DBNAME: notification
+    S3_TEMPORARY_BUCKET: notification-temporary-upload-prod
+    IMAGE_URL: http://images.notification.com
+    DBPORT: '5432'
+    APPLY_SCAN_QR_CODE_GEO_BOUND: true
+    BCC_SEND: true
+    BCC_MAIL: 'payments@notification'
+    PREFIX_MAIL: ''
+    SERVICE_CODE: 1
+    DATABASE: true
+    ALERT_EMAIL: alert@notification
+    ENDPOINT_SOCKET: ws.notification.com/ws

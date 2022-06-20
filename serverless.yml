@@ -1,0 +1,185 @@
+service: notification
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+
+  stage: dev
+  region: us-east-1
+
+  vpc: ${file(./vpc.yml):${opt:env_var, opt:stage, self:provider.stage}}
+  
+  websocketsApiName: dev-ws.notification.com
+  websocketApiRouteSelectionExpression: $request.body.action
+
+  iamRoleStatements:
+    - Effect: 'Allow'
+      Action:
+        - 'lambda:InvokeFunction'
+      Resource: '*'
+    - Effect: "Allow"
+      Action:
+        - "secretsmanager:GetSecretValue"
+        - "kms:Decrypt"
+      Resource: "*"
+
+  environment: ${file(./variables.yml):${opt:env_var, opt:stage, self:provider.stage}}
+
+plugins:
+  - serverless-prune-plugin
+  - serverless-plugin-split-stacks
+  - serverless-dependson-plugin
+  - serverless-offline
+  - serverless-domain-manager
+  - serverless-pseudo-parameters
+  - serverless-plugin-typescript
+  - serverless-mocha-plugin
+
+custom:
+  authFunc:
+    arn: ${self:custom.variables.${opt:env_var, opt:stage, self:provider.stage}.USER_POOL_ARN}
+    identitySource: method.request.header.Authorization
+    type: token
+  prune:
+    automatic: true
+    number: 1
+  splitStacks:
+    perFunction: false
+    perType: true
+
+  dependsOn:
+    enabled: true
+
+  wsDomain:
+    dev: dev-ws1.notification.com
+    stage: stage-ws.notification.com
+    prod: ws.notification.com
+
+  domain:
+    dev: dev-api-sg.notification.com
+    stage: stage-api.notification.com
+    prod: api.notification.com
+
+  customDomain:
+    domainName: ${self:custom.domain.${opt:env_var, opt:stage, self:provider.stage}}
+    basePath: notification
+    stage: ${opt:stage, self:provider.stage}
+    createRoute53Record: false
+
+  variables: ${file(./variables.yml)}
+
+  cors:
+    origin: '*'
+    headers:
+      - Content-Type
+      - X-Amz-Date
+      - Authorization
+      - X-Api-Key
+      - X-Amz-Security-Token
+      - X-Amz-User-Agent
+      - istabletuser
+      - Authorization
+      - AccessToken
+      - authorization
+      - accesstoken
+      - RefreshToken
+      - refreshtoken
+      - language
+      - platformtype
+      - PlatformType
+      - webVersion
+      - webversion
+
+functions:
+  notification:
+    handler: handler.notification
+    timeout: 20
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - NotificationSQS
+              - Arn
+          batchSize: 1
+
+  connectWebSocket:
+    handler: handler.connectWebSocket
+    events:
+      - websocket: $connect
+
+  disconnectWebSocket:
+    handler: handler.disconnectWebSocket
+    events:
+      - websocket: $disconnect
+
+  defaultActionWebSocket:
+    handler: handler.defaultActionWebSocket
+    events:
+      - websocket: $default
+  
+  reconnectWebSocket:
+    handler: handler.reconnectWebSocket
+    events:
+      - websocket: connect
+
+  sendMessageWebSocket:
+    handler: handler.sendMessageWebSocket
+    events:
+      - websocket: sendmessage
+
+  notificationJournal:
+    handler: handler.notificationJournal
+    timeout: 20
+    events:
+      - http:
+          cors: ${self:custom.cors}
+          path: notification-journal
+          method: post
+          integration: lambda-proxy
+          authorizer: ${self:custom.authFunc}
+  
+resources:
+  Resources:
+    NotificationSNS:
+      Type: AWS::SNS::Topic
+      Properties:
+        DisplayName: Resquest
+        TopicName: NOTIFICATION
+
+    NotificationSQS:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: NOTIFICICATION_QUEUE
+
+    NotificationSubscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+          Endpoint: 
+            Fn::GetAtt:
+              - NotificationSQS
+              - Arn
+          Protocol: sqs
+          TopicArn: {"Ref": "NotificationSNS"}
+
+    NotificationSQSPolicy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        Queues:
+          - Ref: NotificationSQS
+        PolicyDocument:
+          Id: NotificationSQSPolicy
+          Version: "2012-10-17"
+          Statement:
+            - Sid: NotificationSQSPolicy-statement-id
+              Effect: Allow
+              Principal:
+                AWS: '*'
+              Action:
+                - sqs:SendMessage
+              Resource:
+                Fn::GetAtt:
+                  - NotificationSQS
+                  - Arn
+              Condition:
+                ArnEquals:
+                  aws:SourceArn: { "Ref": "NotificationSNS" }
